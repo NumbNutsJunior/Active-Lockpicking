@@ -1,5 +1,9 @@
 disableSerialization;
 
+// Author: Pizza Man
+// File: fn_hud_lockpick.sqf
+// Description: A skyrim style lockpicking mini-game.
+
 // Create hud and initalize display
 ("hud_lockpick" call BIS_fnc_rscLayer) cutRsc ["hud_default", "plain"];
 ("hud_lockpick" call BIS_fnc_rscLayer) cutRsc ["hud_lockpick", "plain"];
@@ -98,9 +102,6 @@ pizza_lockpick_picked = nil;
             // Shake the lock-pick and update lockpick unstable duration
             _lock_pick_picture ctrlSetAngle [_pick_current_angle + ((random (_lockpick_shake_amount * 2)) - _lockpick_shake_amount), 0.5, 0.4875];
             pizza_lockpick_unstable_duration = pizza_lockpick_unstable_duration + _delta;
-
-            // Debug
-            //hint str pizza_lockpick_unstable_duration;
 
             // Check if the lockpick broke
             if (pizza_lockpick_unstable_duration >= 1) then {
