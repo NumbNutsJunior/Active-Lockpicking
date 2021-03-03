@@ -1,4 +1,4 @@
-version=53;
+version=54;
 class EditorData
 {
 	moveGridStep=1;
@@ -8,26 +8,27 @@ class EditorData
 	toggles=1;
 	class ItemIDProvider
 	{
-		nextID=10;
+		nextID=12;
 	};
 	class Camera
 	{
-		pos[]={4943.1724,6.5861325,2776.1055};
-		dir[]={0.16310434,-0.25957456,-0.95190787};
-		up[]={0.043840442,0.96572107,-0.25585899};
-		aside[]={-0.98569381,2.4784822e-007,-0.16889584};
+		pos[]={4942.7412,7.5195618,2770.3821};
+		dir[]={0.17858657,-0.33388764,-0.92554867};
+		up[]={0.063258491,0.94260937,-0.32784447};
+		aside[]={-0.98189646,-8.1927283e-008,-0.18945903};
 	};
 };
 binarizationWanted=0;
+sourceName="Lockpicking";
 addons[]=
 {
+	"A3_Soft_F_Gamma_Hatchback_01",
 	"A3_Characters_F",
 	"A3_Weapons_F",
 	"A3_Characters_F_Orange_Facewear",
 	"A3_Characters_F_Orange_Headgear",
 	"A3_Characters_F_Orange",
-	"A3_Weapons_F_Items",
-	"A3_Soft_F_Gamma_Hatchback_01"
+	"A3_Weapons_F_Items"
 };
 class AddonsMetaData
 {
@@ -36,29 +37,29 @@ class AddonsMetaData
 		items=4;
 		class Item0
 		{
+			className="A3_Soft_F_Gamma";
+			name="Arma 3 - Unarmored Land Vehicles";
+			author="Bohemia Interactive";
+			url="https://www.arma3.com";
+		};
+		class Item1
+		{
 			className="A3_Characters_F";
 			name="Arma 3 Alpha - Characters and Clothing";
 			author="Bohemia Interactive";
 			url="https://www.arma3.com";
 		};
-		class Item1
+		class Item2
 		{
 			className="A3_Weapons_F";
 			name="Arma 3 Alpha - Weapons and Accessories";
 			author="Bohemia Interactive";
 			url="https://www.arma3.com";
 		};
-		class Item2
+		class Item3
 		{
 			className="A3_Characters_F_Orange";
 			name="Arma 3 Orange - Characters and Clothing";
-			author="Bohemia Interactive";
-			url="https://www.arma3.com";
-		};
-		class Item3
-		{
-			className="A3_Soft_F_Gamma";
-			name="Arma 3 - Unarmored Land Vehicles";
 			author="Bohemia Interactive";
 			url="https://www.arma3.com";
 		};
@@ -93,6 +94,23 @@ class Mission
 		items=2;
 		class Item0
 		{
+			dataType="Object";
+			class PositionInfo
+			{
+				position[]={4944.0371,6.4501238,2763.2861};
+				angles[]={0,1.9827114,0};
+			};
+			side="Empty";
+			flags=4;
+			class Attributes
+			{
+				lock="LOCKEDPLAYER";
+			};
+			id=8;
+			type="C_Hatchback_01_sport_F";
+		};
+		class Item1
+		{
 			dataType="Group";
 			side="West";
 			class Entities
@@ -103,15 +121,16 @@ class Mission
 					dataType="Object";
 					class PositionInfo
 					{
-						position[]={4943.936,5.0014391,2774.062};
-						angles[]={0,3.1380146,0};
+						position[]={4944.4678,5.0014391,2767.1814};
+						angles[]={0,3.2605903,0};
 					};
 					side="West";
 					flags=7;
 					class Attributes
 					{
+						init="this switchCamera ""external"";";
 						isPlayer=1;
-						stance="Middle";
+						stance="Up";
 						class Inventory
 						{
 							class uniform
@@ -146,7 +165,7 @@ class Mission
 							headgear="H_EarProtectors_black_F";
 						};
 					};
-					id=6;
+					id=11;
 					type="B_Survivor_F";
 					class CustomAttributes
 					{
@@ -214,24 +233,7 @@ class Mission
 			class Attributes
 			{
 			};
-			id=2;
-		};
-		class Item1
-		{
-			dataType="Object";
-			class PositionInfo
-			{
-				position[]={4944.0371,6.4501238,2763.2861};
-				angles[]={0,1.9827114,0};
-			};
-			side="Empty";
-			flags=4;
-			class Attributes
-			{
-				lock="LOCKEDPLAYER";
-			};
-			id=8;
-			type="C_Hatchback_01_sport_F";
+			id=10;
 		};
 	};
 };

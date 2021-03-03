@@ -4,14 +4,31 @@ disableSerialization;
 // File: fn_hud_lockpick.sqf
 // Description: A skyrim style lockpicking mini-game.
 
+// Image paths
+#define IMAGE_INTACT_LOCKPICK "images\lock_pick.paa"
+#define IMAGE_BROKEN_LOCKPICK "images\lock_pick_broken.paa"
+
 // Create hud and initalize display
 ("hud_lockpick" call BIS_fnc_rscLayer) cutRsc ["hud_default", "plain"];
 ("hud_lockpick" call BIS_fnc_rscLayer) cutRsc ["hud_lockpick", "plain"];
 private _display = uiNamespace getVariable ["hud_lockpick", displayNull];
 if (isNull _display) exitWith {};
 
+// Init global variables
+pizza_lockpick_sweet_spot = (random 180) - 90;
+pizza_lockpick_unstable_duration = 0;
+pizza_lockpick_force_chance = 0.20;
+pizza_lockpick_rotate_lock = false;
+pizza_lockpick_rotate_pick = 0;
+pizza_lockpick_picked = nil;
+
 // Controls
+private _lock_pick_picture = _display displayCtrl 1001;
 private _controls_list = _display displayCtrl 1003;
+
+// Preload images (removes flicker)
+_lock_pick_picture ctrlSetText IMAGE_BROKEN_LOCKPICK;
+_lock_pick_picture ctrlSetText IMAGE_INTACT_LOCKPICK;
 
 // Populate controls info list
 {_controls_list lbAdd (format ["[ %2 ]  %1", _x select 0, _x select 1])} forEach [
@@ -20,7 +37,7 @@ private _controls_list = _display displayCtrl 1003;
     ["Rotate the lock", "W"],
     ["Rotate the pick clockwise", "D"],
     ["Rotate the pick counter-clockwise", "A"],
-    [(format ["Force the lock (%1%2 chance)", 10, "%"]), "F"]
+    [(format ["Force the lock (%1%2 chance)", pizza_lockpick_force_chance * 100, "%"]), "F"]
 ];
 
 // Blur the background
@@ -29,34 +46,35 @@ _effect_handle ppEffectAdjust [2.5];
 _effect_handle ppEffectEnable true;
 _effect_handle ppEffectCommit 0;
 
-// Init global variables
-pizza_lockpick_sweet_spot = (random 180) - 90;
-pizza_lockpick_unstable_duration = 0;
-pizza_lockpick_rotate_lock = false;
-pizza_lockpick_rotate_pick = 0;
-pizza_lockpick_picked = nil;
-
 // Mini-game logic
 ["hud_lockpick", "onEachFrame", {
-
-    // Mini-game completed
-    if (!isNil "pizza_lockpick_picked") exitWith {};
 
     // Find display and init time since last frame
     private _display = uiNamespace getVariable ["hud_lockpick", displayNull];
     if (isNull _display) exitWith {};
-    private _delta = diag_deltaTime;
 
     // Controls
     private _lock_inner_picture = _display displayCtrl 1000;
     private _lock_pick_picture = _display displayCtrl 1001;
     private _lock_pick_proxy = _display displayCtrl 1002;
 
+    // Mini-game completed
+    if (!isNil "pizza_lockpick_picked") exitWith {
+
+        // Visually update lockpick based on pick success 
+        _lock_pick_picture ctrlSetText ([IMAGE_BROKEN_LOCKPICK, IMAGE_INTACT_LOCKPICK] select pizza_lockpick_picked);
+
+        // Stop mini-game logic
+        ["hud_lockpick", "onEachFrame"] call BIS_fnc_removeStackedEventHandler;
+    };
+
     // Init basic info
     private _rotation_speed = 1; // Seconds
     private _rotation_amount = 90; // Degrees
     private _lockpick_difficult = 10; // Degrees
     private _lockpick_shake_amount = 1; // Degrees
+    private _lockpick_max_unstable_duration = 1; // Seconds
+    private _delta = diag_deltaTime; // Seconds
 
     call {
 
@@ -101,15 +119,10 @@ pizza_lockpick_picked = nil;
 
             // Shake the lock-pick and update lockpick unstable duration
             _lock_pick_picture ctrlSetAngle [_pick_current_angle + ((random (_lockpick_shake_amount * 2)) - _lockpick_shake_amount), 0.5, 0.4875];
-            pizza_lockpick_unstable_duration = pizza_lockpick_unstable_duration + _delta;
+            if (pizza_lockpick_rotate_lock) then {pizza_lockpick_unstable_duration = pizza_lockpick_unstable_duration + _delta};
 
             // Check if the lockpick broke
-            if (pizza_lockpick_unstable_duration >= 1) then {
-
-                // Break the lockpick and end the game
-                _lock_pick_picture ctrlSetText "images\lock_pick_broken.paa";
-                pizza_lockpick_picked = false;
-            };
+            if (pizza_lockpick_unstable_duration >= _lockpick_max_unstable_duration) exitWith {pizza_lockpick_picked = false};
         } else {
 
             // Reset the lock-pick and update lockpick unstable duration
@@ -145,10 +158,11 @@ _display displayAddEventHandler ["Unload", {
     // Delete global variables
     pizza_lockpick_sweet_spot = nil;
     pizza_lockpick_unstable_duration = nil;
+    pizza_lockpick_force_chance = nil;
     pizza_lockpick_rotate_lock = nil;
     pizza_lockpick_rotate_pick = nil;
 
-    // Stop mini-game logic and show the game HUD again
+    // Stop mini-game logic
     ["hud_lockpick", "onEachFrame"] call BIS_fnc_removeStackedEventHandler;
 }];
 
