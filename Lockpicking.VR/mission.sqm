@@ -5,21 +5,21 @@ class EditorData
 	angleGridStep=0.2617994;
 	scaleGridStep=1;
 	autoGroupingDist=10;
-	toggles=1;
+	toggles=513;
 	class ItemIDProvider
 	{
-		nextID=12;
+		nextID=22;
 	};
 	class Camera
 	{
-		pos[]={4942.7412,7.5195618,2770.3821};
-		dir[]={0.17858657,-0.33388764,-0.92554867};
-		up[]={0.063258491,0.94260937,-0.32784447};
-		aside[]={-0.98189646,-8.1927283e-008,-0.18945903};
+		pos[]={4941.4204,7.354022,2771.0803};
+		dir[]={0.27041811,-0.25647712,-0.92795134};
+		up[]={0.071756281,0.96655029,-0.24623476};
+		aside[]={-0.96006519,0,-0.27977657};
 	};
 };
 binarizationWanted=0;
-sourceName="Lockpicking";
+sourceName="Interactive_Lockpicking";
 addons[]=
 {
 	"A3_Soft_F_Gamma_Hatchback_01",
@@ -65,6 +65,10 @@ class AddonsMetaData
 		};
 	};
 };
+dlcs[]=
+{
+	"Orange"
+};
 randomSeed=4893739;
 class ScenarioData
 {
@@ -98,16 +102,34 @@ class Mission
 			class PositionInfo
 			{
 				position[]={4944.0371,6.4501238,2763.2861};
-				angles[]={0,1.9827114,0};
+				angles[]={0,1.6333663,0};
 			};
 			side="Empty";
 			flags=4;
 			class Attributes
 			{
 				lock="LOCKEDPLAYER";
+				disableSimulation=1;
 			};
 			id=8;
 			type="C_Hatchback_01_sport_F";
+			class CustomAttributes
+			{
+				class Attribute0
+				{
+					property="allowDamage";
+					expression="_this allowdamage _value;";
+					class Value
+					{
+						class data
+						{
+							singleType="BOOL";
+							value=0;
+						};
+					};
+				};
+				nAttributes=1;
+			};
 		};
 		class Item1
 		{
@@ -121,8 +143,8 @@ class Mission
 					dataType="Object";
 					class PositionInfo
 					{
-						position[]={4944.4678,5.0014391,2767.1814};
-						angles[]={0,3.2605903,0};
+						position[]={4943.9854,5.0014391,2768.1606};
+						angles[]={0,3.1232069,0};
 					};
 					side="West";
 					flags=7;
@@ -177,13 +199,7 @@ class Mission
 							{
 								class data
 								{
-									class type
-									{
-										type[]=
-										{
-											"STRING"
-										};
-									};
+									singleType="STRING";
 									value="Male05ENG";
 								};
 							};
@@ -196,13 +212,7 @@ class Mission
 							{
 								class data
 								{
-									class type
-									{
-										type[]=
-										{
-											"SCALAR"
-										};
-									};
+									singleType="SCALAR";
 									value=1.01;
 								};
 							};
@@ -215,13 +225,7 @@ class Mission
 							{
 								class data
 								{
-									class type
-									{
-										type[]=
-										{
-											"STRING"
-										};
-									};
+									singleType="STRING";
 									value="GreekHead_A3_11";
 								};
 							};

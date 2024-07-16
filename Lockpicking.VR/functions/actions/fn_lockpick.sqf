@@ -10,6 +10,10 @@ if !(_picked) exitWith {
 
     // Inform user and return false
     titleText ["You have failed to pick the lock", "plain"];
+    uiSleep 1;
+    titleText ["", "plain"];
+
+    // Return
     false;
 };
 
@@ -22,6 +26,9 @@ switch (true) do {
         // Unlock the car
         _lockpick_target lock false;
         titleText ["The vehicle has been lockpicked", "plain"]; 
+        uiSleep 1;
+        titleText ["", "plain"];
+
     };
 
     // None

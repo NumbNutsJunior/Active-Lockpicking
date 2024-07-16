@@ -16,7 +16,7 @@ switch (true) do {
     case ((!isNull _hud_lockpick) && (_key_code isEqualTo DIK_W)) : {pizza_lockpick_rotate_lock = false};
     case ((!isNull _hud_lockpick) && (_key_code isEqualTo DIK_A)) : {pizza_lockpick_rotate_pick = 0};
     case ((!isNull _hud_lockpick) && (_key_code isEqualTo DIK_D)) : {pizza_lockpick_rotate_pick = 0};
-    case ((!isNull _hud_lockpick) && (_key_code isEqualTo DIK_F)) : {pizza_lockpick_picked = ((random 1) < pizza_lockpick_force_chance)};
+    case ((!isNull _hud_lockpick) && (_key_code isEqualTo DIK_F)) : {pizza_lockpick_picked = ((random 1) <= pizza_lockpick_force_chance)};
     case ((!isNull _hud_lockpick) && (_key_code in (actionKeys "lookAround")) || (_key_code in (actionKeys "personView"))) : {_handled = false};
 };
 
