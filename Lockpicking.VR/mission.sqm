@@ -8,14 +8,14 @@ class EditorData
 	toggles=513;
 	class ItemIDProvider
 	{
-		nextID=22;
+		nextID=25;
 	};
 	class Camera
 	{
-		pos[]={4941.4204,7.354022,2771.0803};
-		dir[]={0.27041811,-0.25647712,-0.92795134};
-		up[]={0.071756281,0.96655029,-0.24623476};
-		aside[]={-0.96006519,0,-0.27977657};
+		pos[]={4942.229,6.9710307,2769.9138};
+		dir[]={0.22157227,-0.31723493,-0.92209965};
+		up[]={0.074118927,0.94834697,-0.30845484};
+		aside[]={-0.97232306,0,-0.23364049};
 	};
 };
 binarizationWanted=0;
@@ -28,13 +28,14 @@ addons[]=
 	"A3_Characters_F_Orange_Facewear",
 	"A3_Characters_F_Orange_Headgear",
 	"A3_Characters_F_Orange",
-	"A3_Weapons_F_Items"
+	"A3_Weapons_F_Items",
+	"A3_Structures_F_Items_Tools"
 };
 class AddonsMetaData
 {
 	class List
 	{
-		items=4;
+		items=5;
 		class Item0
 		{
 			className="A3_Soft_F_Gamma";
@@ -60,6 +61,13 @@ class AddonsMetaData
 		{
 			className="A3_Characters_F_Orange";
 			name="Arma 3 Orange - Characters and Clothing";
+			author="Bohemia Interactive";
+			url="https://www.arma3.com";
+		};
+		class Item4
+		{
+			className="A3_Structures_F";
+			name="Arma 3 - Buildings and Structures";
 			author="Bohemia Interactive";
 			url="https://www.arma3.com";
 		};
@@ -95,13 +103,13 @@ class Mission
 	};
 	class Entities
 	{
-		items=2;
+		items=3;
 		class Item0
 		{
 			dataType="Object";
 			class PositionInfo
 			{
-				position[]={4944.0371,6.4501238,2763.2861};
+				position[]={4944.1265,6.4501238,2763.2297};
 				angles[]={0,1.6333663,0};
 			};
 			side="Empty";
@@ -109,7 +117,7 @@ class Mission
 			class Attributes
 			{
 				lock="LOCKEDPLAYER";
-				disableSimulation=1;
+				name="car";
 			};
 			id=8;
 			type="C_Hatchback_01_sport_F";
@@ -238,6 +246,42 @@ class Mission
 			{
 			};
 			id=10;
+		};
+		class Item2
+		{
+			dataType="Object";
+			class PositionInfo
+			{
+				position[]={4939.792,5.3303208,2765.3279};
+			};
+			side="Empty";
+			class Attributes
+			{
+				init="this setObjectScale 10;";
+				name="screwdriver";
+				createAsSimpleObject=1;
+				disableSimulation=1;
+			};
+			id=22;
+			type="Land_Screwdriver_V1_F";
+			atlOffset=0.3130002;
+			class CustomAttributes
+			{
+				class Attribute0
+				{
+					property="allowDamage";
+					expression="_this allowdamage _value;";
+					class Value
+					{
+						class data
+						{
+							singleType="BOOL";
+							value=0;
+						};
+					};
+				};
+				nAttributes=1;
+			};
 		};
 	};
 };

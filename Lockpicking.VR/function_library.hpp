@@ -2,6 +2,12 @@ class CfgFunctions {
 
     class pizza {
 
+        class util_functions {
+            file = "functions\utility";
+
+            class format_number;
+        };
+
         class action_functions {
             file = "functions\actions";
 

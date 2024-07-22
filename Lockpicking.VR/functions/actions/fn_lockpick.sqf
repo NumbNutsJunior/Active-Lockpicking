@@ -3,14 +3,14 @@
 params [["_lockpick_target", objNull]];
 
 // Attempt to lockpick
-private _picked = [] call pizza_fnc_hud_lockpick;
+private _picked = [5] call pizza_fnc_hud_lockpick;
 
 // Lockpicked failed
 if !(_picked) exitWith {
 
     // Inform user and return false
     titleText ["You have failed to pick the lock", "plain"];
-    uiSleep 1;
+    uiSleep 2;
     titleText ["", "plain"];
 
     // Return
@@ -26,7 +26,7 @@ switch (true) do {
         // Unlock the car
         _lockpick_target lock false;
         titleText ["The vehicle has been lockpicked", "plain"]; 
-        uiSleep 1;
+        uiSleep 2;
         titleText ["", "plain"];
 
     };
