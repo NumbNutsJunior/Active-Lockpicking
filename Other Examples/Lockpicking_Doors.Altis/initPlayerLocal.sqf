@@ -1,4 +1,7 @@
 
+// Config
+pizza_inventory_lockpick = 6;
+
 // Setup event handlers
 [] call pizza_fnc_initEventhandlers;
 
