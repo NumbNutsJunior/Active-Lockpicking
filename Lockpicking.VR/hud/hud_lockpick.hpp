@@ -1,16 +1,51 @@
 
-class RscLine : RscText
-{
+// ...
+#define LOCK_IMAGE_SIZE_W (pixelW * pixelGridNoUIScale * 30)
+#define LOCK_IMAGE_SIZE_H (pixelH * pixelGridNoUIScale * 30)
 
-    style = ST_LINE;
-    colorText[] = {1, 1, 1, 1};
+// ...
+#define LOCK_IMAGE_X ((safeZoneX + (0.5 * safeZoneW)) - (LOCK_IMAGE_SIZE_W / 2))
+#define LOCK_IMAGE_Y ((safeZoneY + (0.5 * safeZoneH)) - (LOCK_IMAGE_SIZE_H / 2))
 
-    x = safeZoneX;
-    y = safeZoneY;
-    w = safezoneW;
-    h = safeZoneH;
+// ...
+#define LOCK_PICK_IMAGE_SIZE_W (LOCK_IMAGE_SIZE_W * 1.25)
+#define LOCK_PICK_IMAGE_SIZE_H (LOCK_IMAGE_SIZE_H * 1.25)
 
-};
+// ...
+#define LOCK_PICK_IMAGE_X ((safeZoneX + (0.5 * safeZoneW)) - (LOCK_PICK_IMAGE_SIZE_W / 2))
+#define LOCK_PICK_IMAGE_Y ((safeZoneY + (0.5 * safeZoneH)) - (LOCK_PICK_IMAGE_SIZE_H / 2))
+
+// ...
+#define CONTROLS_LIST_X (safeZoneX + INFO_LIST_PADDING_X)
+#define CONTROLS_LIST_Y (safeZoneY + INFO_LIST_PADDING_Y)
+
+// ...
+#define CONTROLS_LIST_WIDTH (0.5 * safeZoneW)
+#define CONTROLS_LIST_HEIGHT (0.18 * safeZoneH)
+
+// ...
+#define INFO_LIST_BORDER_LEFT_THICKNESS ((1 * pixelW * pixelGridNoUIScale) / 5)
+#define INFO_LIST_BORDER_BOTTOM_THICKNESS ((1 * pixelH * pixelGridNoUIScale) / 5)
+
+// ...
+#define INFO_LIST_PADDING_X (1 * pixelW * pixelGridNoUIScale)
+#define INFO_LIST_PADDING_Y (1 * pixelH * pixelGridNoUIScale)
+
+// ...
+#define INFO_LIST_X (safeZoneX + INFO_LIST_PADDING_X)
+#define INFO_LIST_Y ((safeZoneY + safeZoneH) - INFO_LIST_HEIGHT - INFO_LIST_PADDING_Y)
+
+// ...
+#define INFO_LIST_WIDTH (0.5 * safeZoneW)
+#define INFO_LIST_HEIGHT (0.12 * safeZoneH)
+
+// ...
+#define N_CONTROLS_LIST_ITEMS (4)
+#define CONTROLS_LIST_TEXT_SIZE (0.020 * safeZoneH)
+
+// ...
+#define N_INFO_LIST_ITEMS (2)
+#define INFO_LIST_TEXT_SIZE (0.030 * safeZoneH)
 
 class hud_lockpick 
 {
@@ -31,14 +66,15 @@ class hud_lockpick
 
             idc = 1000;
 
-            x = safeZoneX;
-            y = safeZoneY;
-            w = 0.20 * safeZoneW;
-            h = 0.15 * safeZoneH;
+            x = CONTROLS_LIST_X;
+            y = CONTROLS_LIST_Y;
+            w = CONTROLS_LIST_WIDTH;
+            h = CONTROLS_LIST_HEIGHT;
 
-            font = "PuristaSemiBold";
-            sizeEx = 0.02 * safeZoneH;
-            rowHeight = (0.15 * safeZoneH) / 4;
+            font = "PuristaMedium";
+            sizeEx = CONTROLS_LIST_TEXT_SIZE;
+
+            rowHeight = CONTROLS_LIST_HEIGHT / N_CONTROLS_LIST_ITEMS;
             colorBackground[] = {0, 0, 0, 0};
 
         };
@@ -49,10 +85,10 @@ class hud_lockpick
             idc = -1;
             text = "images\lock_outer.paa";
 
-            x = safeZoneX + (0.3 * safeZoneW);
-            y = safeZoneY + (0.3 * safeZoneH);
-            w = 0.4 * safeZoneW;
-            h = 0.4 * safeZoneH;
+            x = LOCK_IMAGE_X;
+            y = LOCK_IMAGE_Y;
+            w = LOCK_IMAGE_SIZE_W;
+            h = LOCK_IMAGE_SIZE_H;
 
         };
 
@@ -62,10 +98,10 @@ class hud_lockpick
             idc = 1001;
             text = "images\lock_inner.paa";
 
-            x = safeZoneX + (0.3 * safeZoneW);
-            y = safeZoneY + (0.3 * safeZoneH);
-            w = 0.4 * safeZoneW;
-            h = 0.4 * safeZoneH;
+            x = LOCK_IMAGE_X;
+            y = LOCK_IMAGE_Y;
+            w = LOCK_IMAGE_SIZE_W;
+            h = LOCK_IMAGE_SIZE_H;
 
         };
 
@@ -73,24 +109,18 @@ class hud_lockpick
         {
 
             idc = 1003;
+            onLoad = "(_this select 0) ctrlShow false";
+
             text = "";
 
-            x = safeZoneX;
-            y = safeZoneY;
-            w = 0 * safeZoneW;
-            h = 0 * safeZoneH;
+            x = LOCK_IMAGE_X;
+            y = LOCK_IMAGE_Y;
+            w = LOCK_IMAGE_SIZE_W;
+            h = LOCK_IMAGE_SIZE_H;
+
+            colorBackground[] = {0, 0, 0, 0};
             
         };
-
-        // ...
-        #define INFO_LIST_BORDER_LEFT_THICKNESS ((1 * pixelW * pixelGridNoUIScale) / 5)
-        #define INFO_LIST_BORDER_BOTTOM_THICKNESS ((1 * pixelH * pixelGridNoUIScale) / 5)
-        #define INFO_LIST_PADDING_X (1 * pixelW * pixelGridNoUIScale)
-        #define INFO_LIST_PADDING_Y (1 * pixelH * pixelGridNoUIScale)
-        #define INFO_LIST_X (safeZoneX + INFO_LIST_PADDING_X)
-        #define INFO_LIST_Y ((safeZoneY + safeZoneH) - INFO_LIST_HEIGHT - INFO_LIST_PADDING_Y)
-        #define INFO_LIST_HEIGHT (0.100 * safeZoneH)
-        #define INFO_LIST_WIDTH (0.175 * safeZoneW)
 
         class Info_List_Background_Left : RscBackground
         {
@@ -113,7 +143,7 @@ class hud_lockpick
 
             x = INFO_LIST_X + INFO_LIST_BORDER_LEFT_THICKNESS;
             y = INFO_LIST_Y + INFO_LIST_HEIGHT - INFO_LIST_BORDER_BOTTOM_THICKNESS;
-            w = INFO_LIST_WIDTH - INFO_LIST_BORDER_LEFT_THICKNESS;
+            w = (INFO_LIST_WIDTH - INFO_LIST_BORDER_LEFT_THICKNESS) * 0.5;
             h = INFO_LIST_BORDER_BOTTOM_THICKNESS;
 
             colorBackground[] = {1, 1, 1, 0.75};
@@ -130,9 +160,10 @@ class hud_lockpick
             w = INFO_LIST_WIDTH;
             h = INFO_LIST_HEIGHT;
 
-            font = "PuristaSemiBold";
-            sizeEx = 0.03 * safeZoneH;
-            rowHeight = INFO_LIST_HEIGHT / 2;
+            font = "PuristaSemibold";
+            sizeEx = INFO_LIST_TEXT_SIZE;
+
+            rowHeight = INFO_LIST_HEIGHT / N_INFO_LIST_ITEMS;
             colorBackground[] = {0, 0, 0, 0};
 
         };
@@ -161,10 +192,10 @@ class hud_lockpick_screwdriver
             idc = 1003;
             text = "images\lock_shadow.paa";
 
-            x = safeZoneX + (0.299 * safeZoneW);
-            y = safeZoneY + (0.300 * safeZoneH);
-            w = 0.4 * safeZoneW;
-            h = 0.4 * safeZoneH;
+            x = LOCK_IMAGE_X;
+            y = LOCK_IMAGE_Y;
+            w = LOCK_IMAGE_SIZE_W;
+            h = LOCK_IMAGE_SIZE_H;
 
         };
 
@@ -172,12 +203,42 @@ class hud_lockpick_screwdriver
         {
 
             idc = 1002;
-            text = "images\lock_pick.paa";
+            text = "";
 
-            x = safeZoneX + (0.25 * safeZoneW);
-            y = safeZoneY + (0.25 * safeZoneH);
-            w = 0.5 * safeZoneW;
-            h = 0.5 * safeZoneH;
+            x = LOCK_PICK_IMAGE_X;
+            y = LOCK_PICK_IMAGE_Y;
+            w = LOCK_PICK_IMAGE_SIZE_W;
+            h = LOCK_PICK_IMAGE_SIZE_H;
+
+        };
+
+        class Lock_Inner_Debug_01 : RscBackground 
+        {
+
+            idc = 2001;
+            onLoad = "(_this select 0) ctrlShow false";
+
+            x = LOCK_IMAGE_X;
+            y = LOCK_IMAGE_Y;
+            w = LOCK_IMAGE_SIZE_W;
+            h = LOCK_IMAGE_SIZE_H;
+
+            colorBackground[] = {1, 0, 0, 1};
+
+        };
+
+        class Lock_Inner_Debug_02 : RscBackground 
+        {
+
+            idc = 2002;
+            onLoad = "(_this select 0) ctrlShow false";
+
+            x = LOCK_IMAGE_X;
+            y = LOCK_IMAGE_Y;
+            w = LOCK_IMAGE_SIZE_W;
+            h = LOCK_IMAGE_SIZE_H;
+
+            colorBackground[] = {1, 0, 0, 1};
 
         };
 

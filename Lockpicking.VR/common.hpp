@@ -1989,6 +1989,7 @@ class RscBackgroundLogo: RscPictureKeepAspect
 	w = (8 * (GUI_GRID_WAbs / 32));
 	h = (8 * (GUI_GRID_HAbs / 20));
 };
+
 class RscMapControlEmpty: RscMapControl
 {
 	type = CT_MAP_MAIN;

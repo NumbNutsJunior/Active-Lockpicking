@@ -26,40 +26,45 @@ if (isNull _lock_display) exitWith {false};
 private _screw_driver_display = uiNamespace getVariable ["hud_lockpick_screwdriver", displayNull];
 if (isNull _screw_driver_display) exitWith {false};
 
-// See below for the details
-params [["_difficulty", 3], ["_force_chance", 0.20], ["_sweet_spot", (random 180) - 90]];
+// See below for the difficulty details
+params [["_difficulty_level", 3], ["_force_lock_settings", [0.20, 5]], ["_sweet_spot", (random 180) - 90]];
 
 /*
+
     Difficulty [sweet spot degress, max unstable duration]:
     1 - Very Easy - [16 degrees, 2.00 seconds]
     2 - Easy      - [12 degrees, 1.75 seconds]
     3 - Normal    - [8 degrees, 1.50 seconds]
     4 - Hard      - [4 degrees, 1.25 seconds]
     5 - Very Hard - [1 degrees, 1.00 seconds]
+
+    Force Lock Settings [force chance, force duration]
+
 */
 
 // Set difficulty settings based on the input
-private _difficulty_settings = switch (_difficulty) do {
-    case 1: {[16, 2.00]};
-    case 2: {[12, 1.75]};
-    case 3: {[8, 1.50]};
-    case 4: {[4,  1.25]};
-    case 5: {[1,  1.00]};
+private _difficulty_config = switch (_difficulty_level) do 
+{
+    case 1: {["Very Easy",  [16, 2.00]]};
+    case 2: {["Easy",       [12, 1.75]]};
+    case 3: {["Normal",     [8,  1.50]]};
+    case 4: {["Hard",       [4,  1.25]]};
+    case 5: {["Very Hard",  [1,  1.00]]};
     default {[]};
 };
 
-// Get difficulty text
-private _difficulty_text = switch (_difficulty) do {
-    case 1: {"Very Easy"};
-    case 2: {"Easy"};
-    case 3: {"Normal"};
-    case 4: {"Hard"};
-    case 5: {"Very Hard"};
-    default {"Error"};
-};
+// Check if the difficulty level is valid
+if ((count _difficulty_config) isEqualTo 0) exitWith {false};
 
-// Check if the difficulty is valid
-if ((count _difficulty_settings) isEqualTo 0) exitWith {false};
+// Difficulty text and settings
+_difficulty_config params ["_difficulty_text", "_difficulty_settings"];
+
+// Force lock settings
+_force_lock_settings params ["_force_chance", "_force_duration"];
+
+// Check if the force settings are valid
+if ((_force_chance < 0) || (_force_chance > 1)) exitWith {false};
+if (_force_duration < 0) exitWith {false};
 
 // Check if the sweetspot is valid
 if ((_sweet_spot < -90) || (_sweet_spot > 90)) exitWith {false};
@@ -68,6 +73,11 @@ if ((_sweet_spot < -90) || (_sweet_spot > 90)) exitWith {false};
 pizza_lockpick_sweet_spot_padding = _difficulty_settings select 0;
 pizza_lockpick_max_unstable_duration = _difficulty_settings select 1;
 pizza_lockpick_force_chance = _force_chance;
+pizza_lockpick_force_duration = _force_duration;
+
+// ...
+pizza_lockpick_forced = false;
+pizza_lockpick_forced_key_flag = false;
 
 // Init global variables for mini-game logic
 pizza_lockpick_sweet_spot = (random 180) - 90;
@@ -84,9 +94,15 @@ private _info_list = _lock_display displayCtrl 1004;
 private _screw_driver_object = _screw_driver_display displayCtrl 1000;
 private _lock_pick_picture = _screw_driver_display displayCtrl 1002;
 
+// Resolution data
+getResolution params ["_screen_w", "_screen_h", "_", "_", "_aspect_ratio", "_ui_scale"];
+
 // Adjust screwdriver scale regardless of interface size
-private _screw_driver_object_scale = (0.55 / (getResolution select 5));
+private _screw_driver_object_scale = (0.55 / _ui_scale);
 _screw_driver_object ctrlSetModelScale _screw_driver_object_scale;
+
+// Temporary fix for the screwdriver's direction
+_screw_driver_object ctrlShow ((_screen_w isEqualTo 1920) && {(_screen_h isEqualTo 1080)} && {(_aspect_ratio toFixed 3) isEqualTo ((16 / 9) toFixed 3)});
 
 // Preload images (removes flicker)
 _lock_pick_picture ctrlSetText IMAGE_BROKEN_LOCKPICK;
@@ -115,34 +131,6 @@ private _effect_handle = ppEffectCreate ["DynamicBlur", 0];
 _effect_handle ppEffectAdjust [2.5];
 _effect_handle ppEffectEnable true;
 _effect_handle ppEffectCommit 0;
-
-/*
-call 
-{
-
-    // DEBUG
-    private _alpha = 0.25;
-
-    // DEBUG
-    debug_control_01 = _screw_driver_display ctrlCreate ["RscText", -1];
-    debug_control_01 ctrlSetPosition [0, 0, 1 * pixelW * pixelGrid, 1 * pixelH * pixelGrid];
-    debug_control_01 ctrlSetBackgroundColor [1, 0, 0, _alpha];
-    debug_control_01 ctrlCommit 0;
-
-    // DEBUG
-    debug_control_02 = _screw_driver_display ctrlCreate ["RscText", -1];
-    debug_control_02 ctrlSetPosition [0, 0, 1 * pixelW * pixelGrid, 1 * pixelH * pixelGrid];
-    debug_control_02 ctrlSetBackgroundColor [1, 0, 0, _alpha];
-    debug_control_02 ctrlCommit 0;
-
-    // DEBUG
-    debug_control_03 = _screw_driver_display ctrlCreate ["RscLine", -1];
-    debug_control_03 ctrlSetPosition [0, 0, safeZoneW, safeZoneH];
-    debug_control_03 ctrlSetTextColor [1, 1, 1, _alpha];
-    debug_control_03 ctrlCommit 0;
-
-};
-*/
 
 // Mini-game logic
 ["hud_lockpick", "onEachFrame", 
@@ -179,14 +167,11 @@ call
 
     };
 
-    // Get client screen resolution info
-    getResolution params ["_screen_w", "_screen_h", "_", "_", "_aspect_ratio", "_", "_fov_top", "_fov_left"];
-
     // Init basic mini-game info
-    private _inner_lock_rotation_speed = 0.75; // Seconds
     private _lock_pick_rotation_speed = 2.00; // Seconds
-    private _rotation_amount = 90; // Degrees
-    private _lockpick_shake_amount = 1; // Degrees
+    private _inner_lock_rotation_speed = 0.75; // Seconds
+    private _inner_lock_rotation_amount = 90; // Degrees
+    private _lock_pick_shake_amount = 1; // Degrees
     private _delta = diag_deltaTime; // Seconds
 
     call 
@@ -195,12 +180,33 @@ call
         // Calculate the current angle of the inner lock and ensure it's within 0-359 degrees
         private _current_lock_angle = ((ctrlAngle _lock_inner_picture) select 0) % 360;
 
+        // Check if the lock was forced while being rotated
+        if (pizza_lockpick_forced_key_flag && !pizza_lockpick_forced && !(_current_lock_angle isEqualTo 0)) then 
+        {
+
+            // Inform the user they cannot force the lock while the lock is rotating
+
+            // Reset forced variable
+            pizza_lockpick_forced_key_flag = false;
+
+        };
+
+        // Check if the lock was forced
+        if (pizza_lockpick_forced_key_flag) then 
+        {
+
+            // Update the lock's rotation speed and force the lock
+            _inner_lock_rotation_speed = pizza_lockpick_force_duration;
+            pizza_lockpick_forced = true;
+
+        };
+
         // Determine the angle change for the lock based on rotation amount, time delta, and rotation speed...
         // the lock rotates counter-clockwise unless the lock is set to rotate, so the angle change is negative
-        private _next_lock_angle_difference = -(_rotation_amount * (_delta / _inner_lock_rotation_speed));
+        private _next_lock_angle_difference = -(_inner_lock_rotation_amount * (_delta / _inner_lock_rotation_speed));
 
         // If the lock is supposed to rotate, ensure the angle difference is positive
-        if (pizza_lockpick_rotate_lock) then {_next_lock_angle_difference = abs _next_lock_angle_difference};
+        if (pizza_lockpick_rotate_lock || pizza_lockpick_forced) then {_next_lock_angle_difference = abs _next_lock_angle_difference};
 
         // Calculate the next angle for the lock by adding the difference to the current angle
         private _next_lock_angle = (_current_lock_angle + _next_lock_angle_difference) % 360;
@@ -218,17 +224,17 @@ call
         if ((_pick_current_angle >= (_sweet_spot_padding select 0)) && (_pick_current_angle <= (_sweet_spot_padding select 1))) then {_distance_to_sweet_spot = 0};
 
         // Calculate the maximum rotation percentage based on distance to sweet spot
-        private _max_lock_roation_percentage = abs (1 - (_distance_to_sweet_spot / 180));
+        private _max_lock_roation_percentage = if (pizza_lockpick_forced) then [{1}, {abs (1 - (_distance_to_sweet_spot / 180))}];
 
         // Calculate the actual maximum rotation allowed
-        private _max_lock_roation = _rotation_amount * _max_lock_roation_percentage;
+        private _max_lock_roation = _inner_lock_rotation_amount * _max_lock_roation_percentage;
 
         // Ensure the next lock angle does not exceed the maximum allowed rotation
         _next_lock_angle = (_next_lock_angle max 0) min _max_lock_roation;
 
         // Get the center of the inner lock picture
         (ctrlPosition _lock_inner_picture) params ["_lock_inner_x", "_lock_inner_y", "_lock_inner_w", "_lock_inner_h"];
-        [0.500, 0.485] params ["_lock_center_x_relative", "_lock_center_y_relative"];
+        [0.5, 0.5 - (0.5 * (pixelH * pixelGridNoUIScale))] params ["_lock_center_x_relative", "_lock_center_y_relative"];
         private _lock_center_x = _lock_inner_x + (_lock_inner_w * _lock_center_x_relative);
         private _lock_center_y = _lock_inner_y + (_lock_inner_h * _lock_center_y_relative);
 
@@ -237,56 +243,61 @@ call
         _lock_inner_shadow ctrlSetAngle [_next_lock_angle, _lock_center_x_relative, _lock_center_y_relative, true];
 
         // Calculate the offset for the lockpick based on the current angle
-        private _lock_pick_offset_radius_x = 0.50 * (pixelW * pixelGridNoUIScale);
-        private _lock_pick_offset_radius_y = 1.00 * (pixelH * pixelGridNoUIScale);
+        private _lock_pick_offset_radius_x = 1 * (pixelW * pixelGridNoUIScale);
+        private _lock_pick_offset_radius_y = 1 * (pixelH * pixelGridNoUIScale);
         private _lock_pick_offset_x = - (((sin _next_lock_angle) * _lock_pick_offset_radius_x));
         private _lock_pick_offset_y =   (((cos _next_lock_angle) * _lock_pick_offset_radius_y));
 
         // Update the lockpick's position based on the calculated offsets
         (ctrlPosition _lock_pick_picture) params ["_", "_", "_pick_pos_w", "_pick_pos_h"];
-        _lock_pick_picture ctrlSetPositionX (_lock_pick_offset_x + (_lock_center_x - (_pick_pos_w / 2)) - (0.10 * pixelW * pixelGridNoUIScale));
-        _lock_pick_picture ctrlSetPositionY (_lock_pick_offset_y + (_lock_center_y - (_pick_pos_h / 2)) + (0.25 * pixelW * pixelGridNoUIScale));
+        _lock_pick_picture ctrlSetPositionX ((_lock_center_x - (_pick_pos_w / 2)) + _lock_pick_offset_x);
+        _lock_pick_picture ctrlSetPositionY ((_lock_center_y - (_pick_pos_h / 2)) + _lock_pick_offset_y);
         _lock_pick_picture ctrlCommit 0;
 
         call 
         {
 
             // Calculate the position where the screwdriver should point
-            private _screw_driver_tip_offset_radius_x = 3.75 * (pixelW * pixelGridNoUIScale); // 3.75
-            private _screw_driver_tip_offset_radius_y = 3.75 * (pixelH * pixelGridNoUIScale); // 3.75
-            private _screw_driver_tip_offset_x = - ((sin _next_lock_angle) * _screw_driver_tip_offset_radius_x);
-            private _screw_driver_tip_offset_y =   ((cos _next_lock_angle) * _screw_driver_tip_offset_radius_y);
-            private _screw_driver_tip_position_x = _lock_center_x + _screw_driver_tip_offset_x;
-            private _screw_driver_tip_position_y = _lock_center_y + _screw_driver_tip_offset_y;
-            private _screw_driver_tip_position_z = 0.50;
+            private _screw_driver_tip_offset_x = - (sin _next_lock_angle) * (((_lock_inner_w / 2) * 0.6) - (4.75 * (pixelW * pixelGridNoUIScale)));
+            private _screw_driver_tip_offset_y =   (cos _next_lock_angle) * (((_lock_inner_h / 2) * 0.6) - (4.75 * (pixelH * pixelGridNoUIScale)));
+            private _screw_driver_tip_position_x = _lock_center_x + _screw_driver_tip_offset_x - (0.25 * (pixelW * pixelGridNoUIScale));
+            private _screw_driver_tip_position_y = _lock_center_y + _screw_driver_tip_offset_y - (0.25 * (pixelH * pixelGridNoUIScale));
+            private _screw_driver_tip_position_z = 0;
+
+            // DEBUG
+            private _debug_control_01 = _screw_driver_display displayCtrl 2001;
+            _debug_control_01 ctrlSetPosition [_screw_driver_tip_position_x, _screw_driver_tip_position_y, pixelW * 5, pixelH * 5];
+            _debug_control_01 ctrlCommit 0;
 
             // Define screen space coordinates and desired z-depth
-            private _screw_driver_position_x_prime = _screw_driver_tip_position_x + (8.00 * pixelW * pixelGridNoUIScale); // 8.00
-            private _screw_driver_position_y_prime = _screw_driver_tip_position_y + (8.00 * pixelH * pixelGridNoUIScale); // 8.00
+            private _screw_driver_position_offset_x = 10 * (pixelW * pixelGridNoUIScale);
+            private _screw_driver_position_offset_y = 10 * (pixelH * pixelGridNoUIScale);
+            private _screw_driver_position_x = _screw_driver_tip_position_x + _screw_driver_position_offset_x;
+            private _screw_driver_position_y = _screw_driver_tip_position_y + _screw_driver_position_offset_y;
             private _screw_driver_position_z = 0.25;
 
-            // ...
-            private _screw_driver_distance_to_center_of_screen = [_screw_driver_position_x_prime, _screw_driver_position_y_prime] vectorDistance [0.5, 0.5];
-            private _screw_driver_tip_distance_to_center_of_screen = [_screw_driver_tip_position_x, _screw_driver_tip_position_y] vectorDistance [0.5, 0.5];
-
-            // ...
-            private _screw_driver_position_adjusted_x = _screw_driver_position_x_prime - (0.75 * (pixelW * pixelGridNoUIScale)) - (5 * (pixelW * pixelGridNoUIScale) * _screw_driver_distance_to_center_of_screen);
-            private _screw_driver_position_adjusted_y = _screw_driver_position_y_prime - (7 * (pixelH * pixelGridNoUIScale) * _screw_driver_distance_to_center_of_screen);
-
-            // ...
-            private _rotation_percentage = _current_lock_angle / 90;
-            private _screw_driver_tip_position_adjusted_x = _screw_driver_tip_position_x - (0.75 * (pixelW * pixelGridNoUIScale)) + (1.00 * (pixelW * pixelGridNoUIScale) * _rotation_percentage);
-            private _screw_driver_tip_position_adjusted_y = _screw_driver_tip_position_y + (0.50 * (pixelH * pixelGridNoUIScale)) + (0.75 * (pixelH * pixelGridNoUIScale) * _rotation_percentage);
-
-            // Update the screwdriver's position in 3D space
-            _screw_driver_object ctrlSetPosition [_screw_driver_position_adjusted_x, _screw_driver_position_z, _screw_driver_position_adjusted_y];
+            // DEBUG
+            private _debug_control_02 = _screw_driver_display displayCtrl 2002;
+            _debug_control_02 ctrlSetPosition [_screw_driver_position_x, _screw_driver_position_y, pixelW * 5, pixelH * 5];
+            _debug_control_02 ctrlCommit 0;
 
             // Get the screwdriver's current position and desired tip position
-            private _screw_driver_position = [_screw_driver_position_adjusted_x, _screw_driver_position_z, _screw_driver_position_adjusted_y];
-            private _screw_driver_tip_position = [_screw_driver_tip_position_adjusted_x, _screw_driver_tip_position_z, _screw_driver_tip_position_adjusted_y];
+            private _screw_driver_position = [_screw_driver_position_x, _screw_driver_position_z, _screw_driver_position_y];
+            private _screw_driver_tip_position = [_screw_driver_tip_position_x, _screw_driver_tip_position_z, _screw_driver_tip_position_y];
+
+            // Update the screwdriver's position and the screwdriver tip's position
+            _screw_driver_object ctrlSetPosition _screw_driver_position;
+
+            // Swap the y and z coordinates for the screwdriver's position and tip position
+            _screw_driver_position = [_screw_driver_position select 0, _screw_driver_position select 2, _screw_driver_position select 1];
+            _screw_driver_tip_position = [_screw_driver_tip_position select 0, _screw_driver_tip_position select 2, _screw_driver_tip_position select 1];
+
+            // Adjust the tip position (fix until https://community.bistudio.com/wiki/screenToWorldDirection)
+            _screw_driver_tip_position set [2, (_screw_driver_tip_position select 2) + (2 * (pixelH * pixelGridNoUIScale))];
 
             // Calculate the screwdriver's direction based on the tip position
             private _screw_driver_dir = _screw_driver_position vectorFromTo _screw_driver_tip_position;
+            _screw_driver_dir set [1, -(_screw_driver_dir select 1)];
             _screw_driver_dir set [2, -(_screw_driver_dir select 2)];
 
             // Calculate the direction perpendicular to the inner lock's angle
@@ -300,45 +311,22 @@ call
             // Update the screwdriver's direction
             _screw_driver_object ctrlSetModelDirAndUp [_screw_driver_dir, _screw_driver_up];
             
-            /*
-            // DEBUG
-            call
-            {
-
-                (ctrlPosition debug_control_01) params ["_", "_", "_debug_control_01_width", "_debug_control_01_height"];
-                debug_control_01 ctrlSetPosition [_screw_driver_tip_position_x - (_debug_control_01_width / 2), _screw_driver_tip_position_y - (_debug_control_01_height / 2)];
-                debug_control_01 ctrlCommit 0;
-
-                (ctrlPosition debug_control_02) params ["_", "_", "_debug_control_02_width", "_debug_control_02_height"];
-                debug_control_02 ctrlSetPosition [_screw_driver_position_x_prime - (_debug_control_02_width / 2), _screw_driver_position_y_prime - (_debug_control_02_height / 2)];
-                debug_control_02 ctrlCommit 0;
-
-                debug_control_03 ctrlSetPosition 
-                [
-                    ((ctrlPosition debug_control_01) select 0) + (((ctrlPosition debug_control_01) select 2) / 2),
-                    ((ctrlPosition debug_control_01) select 1) + (((ctrlPosition debug_control_01) select 3) / 2),
-                    abs (((ctrlPosition debug_control_01) select 0) - ((ctrlPosition debug_control_02) select 0)), 
-                    abs (((ctrlPosition debug_control_01) select 1) - ((ctrlPosition debug_control_02) select 1))
-                ];
-
-                debug_control_03 ctrlCommit 0;
-
-            };
-            */
-
         };
 
         call 
         {
 
             // Check if the lock has been successfully picked
-            if ((_current_lock_angle toFixed 2) isEqualTo (90 toFixed 2)) exitWith {pizza_lockpick_picked = true};
+            private _inner_lock_fully_rotated = (_current_lock_angle toFixed 2) isEqualTo (90 toFixed 2);
+            if (_inner_lock_fully_rotated && !pizza_lockpick_forced) exitWith {pizza_lockpick_picked = true};
+            if (_inner_lock_fully_rotated && pizza_lockpick_forced) exitWith {pizza_lockpick_picked = (random 1) <= pizza_lockpick_force_chance};
 
             // Check if the lockpick is in the unstable region
-            if (((_current_lock_angle toFixed 2) isEqualTo (_max_lock_roation toFixed 2)) && pizza_lockpick_rotate_lock) then {
+            if (((_current_lock_angle toFixed 2) isEqualTo (_max_lock_roation toFixed 2)) && pizza_lockpick_rotate_lock && !pizza_lockpick_forced) then 
+            {
 
                 // Simulate lockpick shaking by adjusting its angle randomly within a range
-                _lock_pick_picture ctrlSetAngle [_pick_current_angle + ((random (_lockpick_shake_amount * 2)) - _lockpick_shake_amount), 0.5, 0.4875, true];
+                _lock_pick_picture ctrlSetAngle [_pick_current_angle + ((random (_lock_pick_shake_amount * 2)) - _lock_pick_shake_amount), 0.5, 0.5, true];
 
                 // Increase the duration the lockpick has been unstable if it's supposed to rotate
                 pizza_lockpick_unstable_duration = pizza_lockpick_unstable_duration + _delta;
@@ -349,7 +337,7 @@ call
             } else {
 
                 // Reset the lockpick's angle if it's stable
-                _lock_pick_picture ctrlSetAngle [_pick_current_angle, 0.5, 0.4875, true];
+                _lock_pick_picture ctrlSetAngle [_pick_current_angle, 0.5, 0.5, true];
 
                 // Reset the unstable duration if the lock is stable
                 // pizza_lockpick_unstable_duration = 0;
@@ -362,7 +350,8 @@ call
         {
 
             // Only proceed if the lock is not set to rotate
-            if !(pizza_lockpick_rotate_lock) then {
+            if (!pizza_lockpick_rotate_lock && !pizza_lockpick_forced) then 
+            {
 
                 // Check if there's a need to rotate the lockpick
                 if !(pizza_lockpick_rotate_pick isEqualTo 0) then {
@@ -384,7 +373,7 @@ call
                     _next_angle = (_next_angle min 90) max -90;
 
                     // Apply the calculated rotation to the lockpick and its proxy
-                    _lock_pick_picture ctrlSetAngle [_next_angle, 0.5, 0.4875, true];
+                    _lock_pick_picture ctrlSetAngle [_next_angle, 0.5, 0.5, true];
                     _lock_pick_proxy ctrlSetAngle [_next_angle, 0.5, 0.5, true];
                     
                 };
@@ -406,6 +395,11 @@ _lock_display displayAddEventHandler ["Unload",
     pizza_lockpick_unstable_lock_percent = nil;
     pizza_lockpick_max_unstable_duration = nil;
     pizza_lockpick_force_chance = nil;
+    pizza_lockpick_force_duration = nil;
+
+    // ...
+    pizza_lockpick_forced = nil;
+    pizza_lockpick_forced_key_flag = nil;
 
     // Delete global variables for mini-game logic
     pizza_lockpick_sweet_spot = nil;
@@ -440,7 +434,7 @@ switch (true) do
         ppEffectDestroy _effect_handle;
 
         // Return the result of the mini-game (recursive)
-        _return = if (pizza_lockpick_picked) then [{true}, {[_difficulty, _force_chance, _sweet_spot] call pizza_fnc_hud_lockpick}];
+        _return = if (pizza_lockpick_picked) then [{true}, {[_difficulty_level, _force_lock_settings, _sweet_spot] call pizza_fnc_hud_lockpick}];
 
     };
 
@@ -486,7 +480,7 @@ switch (true) do
         ppEffectDestroy _effect_handle;
 
         // Return the result of the mini-game (recursive)
-        _return = if (pizza_lockpick_picked) then [{true}, {[_difficulty, _force_chance, _sweet_spot] call pizza_fnc_hud_lockpick}];
+        _return = if (pizza_lockpick_picked) then [{true}, {[_difficulty_level, _force_lock_settings, _sweet_spot] call pizza_fnc_hud_lockpick}];
 
     };
 

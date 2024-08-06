@@ -8,18 +8,18 @@ class EditorData
 	toggles=513;
 	class ItemIDProvider
 	{
-		nextID=25;
+		nextID=28;
 	};
 	class Camera
 	{
-		pos[]={4942.229,6.9710307,2769.9138};
-		dir[]={0.22157227,-0.31723493,-0.92209965};
-		up[]={0.074118927,0.94834697,-0.30845484};
-		aside[]={-0.97232306,0,-0.23364049};
+		pos[]={4938.0239,11.81803,2780.8235};
+		dir[]={0.24896707,-0.34128183,-0.90638971};
+		up[]={0.090395167,0.93996096,-0.32909271};
+		aside[]={-0.9642843,7.4505806e-009,-0.26486954};
 	};
 };
 binarizationWanted=0;
-sourceName="Interactive_Lockpicking";
+sourceName="Lockpicking";
 addons[]=
 {
 	"A3_Soft_F_Gamma_Hatchback_01",
@@ -109,15 +109,16 @@ class Mission
 			dataType="Object";
 			class PositionInfo
 			{
-				position[]={4944.1265,6.4501238,2763.2297};
+				position[]={4944.126,6.4501238,2763.2302};
 				angles[]={0,1.6333663,0};
 			};
 			side="Empty";
 			flags=4;
 			class Attributes
 			{
-				lock="LOCKEDPLAYER";
+				lock="LOCKED";
 				name="car";
+				textures="White";
 			};
 			id=8;
 			type="C_Hatchback_01_sport_F";
@@ -136,7 +137,57 @@ class Mission
 						};
 					};
 				};
-				nAttributes=1;
+				class Attribute1
+				{
+					property="VehicleCustomization";
+					expression="if (local _this) then {([_this] + _value + [true]) call (uinamespace getvariable 'BIS_fnc_initVehicle')};";
+					class Value
+					{
+						class data
+						{
+							singleType="ARRAY";
+							class value
+							{
+								items=2;
+								class Item0
+								{
+									class data
+									{
+										singleType="ARRAY";
+										class value
+										{
+											items=2;
+											class Item0
+											{
+												class data
+												{
+													singleType="STRING";
+													value="White";
+												};
+											};
+											class Item1
+											{
+												class data
+												{
+													singleType="SCALAR";
+													value=1;
+												};
+											};
+										};
+									};
+								};
+								class Item1
+								{
+									class data
+									{
+										singleType="ARRAY";
+									};
+								};
+							};
+						};
+					};
+				};
+				nAttributes=2;
 			};
 		};
 		class Item1
