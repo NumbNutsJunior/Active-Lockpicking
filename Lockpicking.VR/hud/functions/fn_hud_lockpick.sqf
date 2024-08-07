@@ -2,6 +2,7 @@
 /*
     File: fn_hud_lockpick.sqf
     Author: Pizza Man
+    Sound design: "Sikorsky" & "Lil Unemployed (lockpicked local McDonalds)"
     Description: A fallout style lockpicking mini-game.
 */
 
@@ -12,44 +13,36 @@ disableSerialization;
 #define IMAGE_INTACT_LOCKPICK "images\lock_pick.paa"
 #define IMAGE_BROKEN_LOCKPICK "images\lock_pick_broken.paa"
 
-// Sound paths
-#define SOUND_LOCKPICK_SUCCESS "sound_name"
-#define SOUND_LOCKPICK_FAIL "sound_name"
-
-// Create hud and initalize display
-"hud_lockpick" cutRsc ["hud_lockpick", "plain"];
-private _lock_display = uiNamespace getVariable ["hud_lockpick", displayNull];
-if (isNull _lock_display) exitWith {false};
-
-// Create screwdriver display after
-"hud_lockpick_screwdriver" cutRsc ["hud_lockpick_screwdriver", "plain"];
-private _screw_driver_display = uiNamespace getVariable ["hud_lockpick_screwdriver", displayNull];
-if (isNull _screw_driver_display) exitWith {false};
+// Sounds
+#define SOUND_LOCKPICK_SUCCESS "unlock"
+#define SOUND_LOCKPICK_FAIL_NORMAL "lockpick_break"
+#define SOUND_LOCKPICK_FAIL_CHANCE "lockpick_break_chance"
+#define SOUND_LOCKPICK_JIGGLE "lockpick_jiggle"
+#define SOUND_INNER_LOCK_RATTLE "lockpick_rattle"
+#define SOUND_INNER_LOCK_ROTATE "lockpick_inner_lock_rotate"
 
 // See below for the difficulty details
-params [["_difficulty_level", 3], ["_force_lock_settings", [0.20, 5]], ["_sweet_spot", (random 180) - 90]];
+params [["_difficulty_level", 0], ["_force_lock_settings", [0.20, 5]], ["_sweet_spot", (random 180) - 90]];
 
 /*
 
     Difficulty [sweet spot degress, max unstable duration]:
-    1 - Very Easy - [16 degrees, 2.00 seconds]
-    2 - Easy      - [12 degrees, 1.75 seconds]
-    3 - Normal    - [8 degrees, 1.50 seconds]
-    4 - Hard      - [4 degrees, 1.25 seconds]
-    5 - Very Hard - [1 degrees, 1.00 seconds]
+    0 - Average   - [6 degrees,  2.00 seconds]
+    1 - Hard      - [4 degrees,  1.75 seconds]
+    2 - Very Hard - [2 degrees,  1.50 seconds]
+    3 - Expert    - [1 degrees,  1.25 seconds]
 
     Force Lock Settings [force chance, force duration]
 
 */
 
 // Set difficulty settings based on the input
-private _difficulty_config = switch (_difficulty_level) do 
+private _difficulty_config = switch (_difficulty_level) do
 {
-    case 1: {["Very Easy",  [16, 2.00]]};
-    case 2: {["Easy",       [12, 1.75]]};
-    case 3: {["Normal",     [8,  1.50]]};
-    case 4: {["Hard",       [4,  1.25]]};
-    case 5: {["Very Hard",  [1,  1.00]]};
+    case 0: {["Average",    [6, 2.00]]};
+    case 1: {["Hard",       [4, 1.75]]};
+    case 2: {["Very Hard",  [2, 1.50]]};
+    case 3: {["Expert",     [1, 1.25]]};
     default {[]};
 };
 
@@ -67,7 +60,18 @@ if ((_force_chance < 0) || (_force_chance > 1)) exitWith {false};
 if (_force_duration < 0) exitWith {false};
 
 // Check if the sweetspot is valid
-if ((_sweet_spot < -90) || (_sweet_spot > 90)) exitWith {false};
+if ((abs _sweet_spot) > 90) exitWith {false};
+
+// Create hud and initalize display
+"hud_lockpick" cutRsc ["hud_lockpick", "plain"];
+private _lock_display = uiNamespace getVariable ["hud_lockpick", displayNull];
+if (isNull _lock_display) exitWith {false};
+
+// Create screwdriver display after
+"hud_lockpick_screwdriver" cutRsc ["hud_lockpick_screwdriver", "plain"];
+private _screw_driver_display = uiNamespace getVariable ["hud_lockpick_screwdriver", displayNull];
+if (isNull _screw_driver_display) exitWith {false};
+
 
 // Init global variables for mini-game difficulty
 pizza_lockpick_sweet_spot_padding = _difficulty_settings select 0;
@@ -79,8 +83,12 @@ pizza_lockpick_force_duration = _force_duration;
 pizza_lockpick_forced = false;
 pizza_lockpick_forced_key_flag = false;
 
+// Sound ids
+// [rotate lockpick, rotate lock, lockpick shake]
+pizza_lockpick_sounds = [-1, -1, -1];
+
 // Init global variables for mini-game logic
-pizza_lockpick_sweet_spot = (random 180) - 90;
+pizza_lockpick_sweet_spot = _sweet_spot;
 pizza_lockpick_unstable_duration = 0;
 pizza_lockpick_rotate_lock = false;
 pizza_lockpick_rotate_pick = 0;
@@ -154,13 +162,33 @@ _effect_handle ppEffectCommit 0;
     private _lock_inner_shadow = _screw_driver_display displayCtrl 1003;
 
     // Mini-game completed
-    if (!isNil "pizza_lockpick_picked") exitWith {
+    if (!isNil "pizza_lockpick_picked") exitWith 
+    {
+
+        {
+
+            // ...
+            stopSound _x;
+            pizza_lockpick_sounds set [_forEachIndex, -1];
+
+        // Stop and reset the all the sounds
+        } forEach (pizza_lockpick_sounds select {_x isNotEqualTo -1});
 
         // Visually update lockpick based on pick success 
         _lock_pick_picture ctrlSetText ([IMAGE_BROKEN_LOCKPICK, IMAGE_INTACT_LOCKPICK] select pizza_lockpick_picked);
 
+        // ...
+        private _lock_pick_east_egg_chance = 300;
+
+        // Check if the lockpickign was sucessful
+        private _lock_pick_end_sound = if (pizza_lockpick_picked) then 
+        [
+            {SOUND_LOCKPICK_SUCCESS}, 
+            {[SOUND_LOCKPICK_FAIL_NORMAL, SOUND_LOCKPICK_FAIL_CHANCE] select ((ceil (random _lock_pick_east_egg_chance)) isEqualTo 1)}
+        ];
+
         // Play sound based on pick success
-        // playSound ([SOUND_LOCKPICK_FAIL, SOUND_LOCKPICK_SUCCESS] select pizza_lockpick_picked);
+        playSoundUI [_lock_pick_end_sound, 1];
 
         // Stop mini-game logic
         ["hud_lockpick", "onEachFrame"] call BIS_fnc_removeStackedEventHandler;
@@ -181,7 +209,7 @@ _effect_handle ppEffectCommit 0;
         private _current_lock_angle = ((ctrlAngle _lock_inner_picture) select 0) % 360;
 
         // Check if the lock was forced while being rotated
-        if (pizza_lockpick_forced_key_flag && !pizza_lockpick_forced && !(_current_lock_angle isEqualTo 0)) then 
+        if (pizza_lockpick_forced_key_flag && !pizza_lockpick_forced && (_current_lock_angle isNotEqualTo 0)) then 
         {
 
             // Inform the user they cannot force the lock while the lock is rotating
@@ -313,6 +341,54 @@ _effect_handle ppEffectCommit 0;
             
         };
 
+        call
+        {
+
+            // Check if the lock is supposed to rotate
+            if ((_current_lock_angle isNotEqualTo 0) && ((_current_lock_angle toFixed 2) isNotEqualTo (_max_lock_roation toFixed 2))) then 
+            {
+
+                // Check to play lock rotation sound
+                if ((pizza_lockpick_sounds select 1) isEqualTo -1) then 
+                {
+
+                    // ...
+                    pizza_lockpick_sounds set [1, playSoundUI [SOUND_INNER_LOCK_ROTATE, 0.5]];
+
+                }
+                else
+                {
+
+                   // Check if the sound has finished playing
+                    if ((count (soundParams (pizza_lockpick_sounds select 1))) isEqualTo 0) then
+                    {
+
+                        // Stop and reset the sound
+                        stopSound (pizza_lockpick_sounds select 1);
+                        pizza_lockpick_sounds set [1, -1];
+
+                    };
+
+                };
+
+            }
+            else
+            {
+
+                // Check to stop lock rotation sound
+                if ((pizza_lockpick_sounds select 1) isNotEqualTo -1) then 
+                {
+
+                    // Stop and reset the sound
+                    stopSound (pizza_lockpick_sounds select 1);
+                    pizza_lockpick_sounds set [1, -1];
+
+                };
+
+            };
+
+        };
+
         call 
         {
 
@@ -325,6 +401,29 @@ _effect_handle ppEffectCommit 0;
             if (((_current_lock_angle toFixed 2) isEqualTo (_max_lock_roation toFixed 2)) && pizza_lockpick_rotate_lock && !pizza_lockpick_forced) then 
             {
 
+                // Check to play lock rattle sound
+                if ((pizza_lockpick_sounds select 2) isEqualTo -1) then 
+                {
+
+                    // ...
+                    pizza_lockpick_sounds set [2, playSoundUI [SOUND_INNER_LOCK_RATTLE, 1]];
+
+                }
+                else
+                {
+
+                    // Check if the sound has finished playing
+                    if ((count (soundParams (pizza_lockpick_sounds select 2))) isEqualTo 0) then
+                    {
+
+                        // Stop and reset the sound
+                        stopSound (pizza_lockpick_sounds select 2);
+                        pizza_lockpick_sounds set [2, -1];
+
+                    };
+
+                };
+
                 // Simulate lockpick shaking by adjusting its angle randomly within a range
                 _lock_pick_picture ctrlSetAngle [_pick_current_angle + ((random (_lock_pick_shake_amount * 2)) - _lock_pick_shake_amount), 0.5, 0.5, true];
 
@@ -335,6 +434,16 @@ _effect_handle ppEffectCommit 0;
                 if (pizza_lockpick_unstable_duration >= pizza_lockpick_max_unstable_duration) exitWith {pizza_lockpick_picked = false};
 
             } else {
+
+                // Check to play lock rattle sound
+                if ((pizza_lockpick_sounds select 2) isNotEqualTo -1) then 
+                {
+
+                    // Stop and reset the sound
+                    stopSound (pizza_lockpick_sounds select 2);
+                    pizza_lockpick_sounds set [2, -1];
+
+                };
 
                 // Reset the lockpick's angle if it's stable
                 _lock_pick_picture ctrlSetAngle [_pick_current_angle, 0.5, 0.5, true];
@@ -353,11 +462,32 @@ _effect_handle ppEffectCommit 0;
             if (!pizza_lockpick_rotate_lock && !pizza_lockpick_forced) then 
             {
 
-                // Check if there's a need to rotate the lockpick
-                if !(pizza_lockpick_rotate_pick isEqualTo 0) then {
+                // ...
+                private _pick_current_angle = ((ctrlAngle _lock_pick_picture) select 0) % 360;
+                private _lockpick_not_at_edge = (round (abs _pick_current_angle)) isNotEqualTo 90;
 
-                    // Calculate the current angle of the lockpick
-                    private _pick_current_angle = ((ctrlAngle _lock_pick_picture) select 0) % 360;
+                // Check if there's a need to rotate the lockpick
+                if (pizza_lockpick_rotate_pick isNotEqualTo 0) then
+                {
+
+                    // Check to play jiggle sound
+                    if (((pizza_lockpick_sounds select 0) isEqualTo -1) && (_lockpick_not_at_edge)) then 
+                    {
+
+                        // ...
+                        pizza_lockpick_sounds set [0, playSoundUI [SOUND_LOCKPICK_JIGGLE, 0.5]];
+
+                    };
+
+                    // Stop the sound if lockpick at the edge
+                    if (((pizza_lockpick_sounds select 0) isNotEqualTo -1) && (!_lockpick_not_at_edge)) then 
+                    {
+
+                        // Stop and reset the sound
+                        stopSound (pizza_lockpick_sounds select 0);
+                        pizza_lockpick_sounds set [0, -1];
+
+                    };
 
                     // Determine the angle change for the lockpick based on rotation amount, time delta, and rotation speed
                     // the lockpick rotates counter-clockwise unless the lockpick is set to rotate clockwise, so the angle change is negative
@@ -376,6 +506,34 @@ _effect_handle ppEffectCommit 0;
                     _lock_pick_picture ctrlSetAngle [_next_angle, 0.5, 0.5, true];
                     _lock_pick_proxy ctrlSetAngle [_next_angle, 0.5, 0.5, true];
                     
+                }
+                else 
+                {
+
+                    // Check to stop the jiggle sound
+                    if ((pizza_lockpick_sounds select 0) isNotEqualTo -1) then 
+                    {
+
+                        // Stop and reset the sound
+                        stopSound (pizza_lockpick_sounds select 0);
+                        pizza_lockpick_sounds set [0, -1];
+
+                    };
+
+                };
+
+            }
+            else
+            {
+
+                // Check to stop the jiggle sound
+                if ((pizza_lockpick_sounds select 0) isNotEqualTo -1) then 
+                {
+
+                    // Stop and reset the sound
+                    stopSound (pizza_lockpick_sounds select 0);
+                    pizza_lockpick_sounds set [0, -1];
+
                 };
 
             };
@@ -400,6 +558,9 @@ _lock_display displayAddEventHandler ["Unload",
     // ...
     pizza_lockpick_forced = nil;
     pizza_lockpick_forced_key_flag = nil;
+
+    // Sound ids
+    pizza_lockpick_sounds = nil;
 
     // Delete global variables for mini-game logic
     pizza_lockpick_sweet_spot = nil;

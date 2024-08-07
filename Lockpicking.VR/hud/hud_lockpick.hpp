@@ -37,7 +37,7 @@
 
 // ...
 #define INFO_LIST_WIDTH (0.5 * safeZoneW)
-#define INFO_LIST_HEIGHT (0.12 * safeZoneH)
+#define INFO_LIST_HEIGHT (0.10 * safeZoneH)
 
 // ...
 #define N_CONTROLS_LIST_ITEMS (4)
@@ -45,7 +45,7 @@
 
 // ...
 #define N_INFO_LIST_ITEMS (2)
-#define INFO_LIST_TEXT_SIZE (0.030 * safeZoneH)
+#define INFO_LIST_TEXT_SIZE (0.032 * safeZoneH)
 
 class hud_lockpick 
 {
@@ -143,7 +143,7 @@ class hud_lockpick
 
             x = INFO_LIST_X + INFO_LIST_BORDER_LEFT_THICKNESS;
             y = INFO_LIST_Y + INFO_LIST_HEIGHT - INFO_LIST_BORDER_BOTTOM_THICKNESS;
-            w = (INFO_LIST_WIDTH - INFO_LIST_BORDER_LEFT_THICKNESS) * 0.5;
+            w = (INFO_LIST_WIDTH - INFO_LIST_BORDER_LEFT_THICKNESS) * 0.4;
             h = INFO_LIST_BORDER_BOTTOM_THICKNESS;
 
             colorBackground[] = {1, 1, 1, 0.75};

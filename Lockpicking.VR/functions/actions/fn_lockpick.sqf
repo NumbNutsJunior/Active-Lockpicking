@@ -3,7 +3,7 @@
 params [["_lockpick_target", objNull]];
 
 // Attempt to lockpick
-private _picked = [5] call pizza_fnc_hud_lockpick;
+private _picked = [0] call pizza_fnc_hud_lockpick;
 
 // Lockpicked failed
 if !(_picked) exitWith {
